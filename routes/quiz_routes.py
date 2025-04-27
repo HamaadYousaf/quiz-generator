@@ -1,9 +1,31 @@
+import json
 import textwrap
 from fastapi import APIRouter, UploadFile, File, HTTPException, Query
 import fitz
+from azure.ai.inference import ChatCompletionsClient
+from azure.ai.inference.models import SystemMessage, UserMessage
+from azure.core.credentials import AzureKeyCredential
+import os
+import asyncio
+from dotenv import load_dotenv
+
+load_dotenv()
+
+router = APIRouter()
 
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 MAX_TOTAL_QUESTIONS = 20
+CHUNK_SIZE = 2500  # Max characters per chunk
+
+endpoint = os.getenv("AZURE_ENDPOINT", "https://models.github.ai/inference")
+model = os.getenv("AZURE_MODEL", "openai/gpt-4.1")
+token = os.getenv("GITHUB_TOKEN")
+
+
+client = ChatCompletionsClient(
+    endpoint=endpoint,
+    credential=AzureKeyCredential(token),
+)
 
 
 def split_text_into_chunks(text, max_chunk_size=3500):
@@ -42,27 +64,47 @@ def build_prompt(text_chunks, num_mcq, num_tf):
         {merged_text}
         ---
 
-        Output format:
+        ⚠️ Important:
+        Output your response **strictly** in the following JSON format:
 
-        ### Multiple Choice Questions:
-        1. Question: ...
-        a) Option A
-        b) Option B
-        c) Option C
-        d) Option D
-        Answer: b)
+        {{
+        "multiple_choice": [
+            {{
+            "question": "Your MCQ question here",
+            "options": ["Option A", "Option B", "Option C", "Option D"],
+            "answer": "The correct option text here"
+            }}
+        ],
+        "true_false": [
+            {{
+            "statement": "Your True/False statement here",
+            "answer": "True"  // or "False"
+            }}
+        ]
+        }}
 
-        ### True/False Questions:
-        1. Statement: ...
-        Answer: True
-
-        Be clear and concise in your questions. Do not invent new material outside the lecture notes.
+        ⚠️ Do not include any explanations, headings, or extra text outside the JSON.
+        Only output a single valid JSON object.
         """
 
     return textwrap.dedent(prompt).strip()
 
 
-router = APIRouter()
+async def call_gpt4(prompt: str):
+    """Call GitHub Models GPT-4.1 using azure.ai.inference library."""
+    response = await asyncio.to_thread(
+        client.complete,
+        messages=[
+            SystemMessage(
+                content="You are a helpful AI assistant for generating study quizzes."
+            ),
+            UserMessage(content=prompt),
+        ],
+        temperature=0.3,
+        top_p=1,
+        model=model,
+    )
+    return response.choices[0].message.content
 
 
 @router.post("/generate-questions/")
@@ -102,8 +144,41 @@ async def generate_questions(
     pdf_document.close()
 
     text_chunks = split_text_into_chunks(extracted_text)
+    total_chunks = len(text_chunks)
 
-    # Build the prompt using all chunks
-    prompt = build_prompt(text_chunks, num_mcq, num_tf)
+    # Distribute questions equally across chunks
+    mcq_per_chunk = max(1, num_mcq // total_chunks)
+    tf_per_chunk = max(0, num_tf // total_chunks)
 
-    return {"prompt": prompt}
+    combined_mcq = []
+    combined_tf = []
+
+    for chunk in text_chunks:
+        prompt = build_prompt(chunk, mcq_per_chunk, tf_per_chunk)
+        try:
+            response_text = await call_gpt4(prompt)
+
+            # Clean parsing of the response
+            try:
+                first_pass = json.loads(response_text)
+
+                # If still string inside, double decode
+                if isinstance(first_pass, str):
+                    parsed_response = json.loads(first_pass)
+                else:
+                    parsed_response = first_pass
+            except json.JSONDecodeError:
+                raise HTTPException(
+                    status_code=500, detail="Model output was not valid JSON."
+                )
+
+            # Merge MCQ and T/F into combined lists
+            combined_mcq.extend(parsed_response.get("multiple_choice", []))
+            combined_tf.extend(parsed_response.get("true_false", []))
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to call GPT-4: {e}")
+
+    final_result = {"multiple_choice": combined_mcq, "true_false": combined_tf}
+
+    return final_result
