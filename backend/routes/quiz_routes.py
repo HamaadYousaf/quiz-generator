@@ -8,6 +8,9 @@ from azure.core.credentials import AzureKeyCredential
 import os
 import asyncio
 from dotenv import load_dotenv
+from services.auth import get_current_user
+from fastapi import Depends
+
 
 load_dotenv()
 
@@ -112,6 +115,7 @@ async def generate_questions(
     file: UploadFile = File(...),
     num_mcq: int = Query(0, ge=0, le=20),
     num_tf: int = Query(0, ge=0, le=20),
+    user: dict = Depends(get_current_user),
 ):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="File must be a PDF.")
