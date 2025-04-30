@@ -120,8 +120,8 @@ async def call_gpt4(prompt: str):
 @router.post("/generate-questions/")
 async def generate_questions(
     file: UploadFile = File(...),
-    num_mcq: int = Query(0, ge=0, le=20),
-    num_tf: int = Query(0, ge=0, le=20),
+    num_mcq: int = Form(...),
+    num_tf: int = Form(...),
     user: dict = Depends(get_current_user),
     title: str = Form(...),
 ):

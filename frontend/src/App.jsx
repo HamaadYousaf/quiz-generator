@@ -6,7 +6,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import QuizDetail from "./pages/QuizDetail";
 import EditQuiz from "./pages/EditQuiz";
-// import UploadQuiz from "./pages/UploadQuiz";
+import UploadQuiz from "./pages/UploadQuiz";
 
 function App() {
     return (
@@ -35,12 +35,11 @@ function App() {
                             </ProtectedRoute>
                         }
                     />
-
-                    {/* <Route path="/upload" element={
+                    <Route path="/upload" element={
                         <ProtectedRoute>
                             <UploadQuiz />
                         </ProtectedRoute>
-                    } /> */}
+                    } />
                 </Routes>
             </AuthProvider>
         </Router>
