@@ -248,21 +248,18 @@ async def get_my_quizzes(user: dict = Depends(get_current_user)):
 
 
 @router.get("/quiz/{quiz_id}")
-async def get_quiz(quiz_id: str, user: dict = Depends(get_current_user)):
+async def get_quiz(quiz_id: str):
     try:
         response = (
             supabase.table("quizzes")
             .select("id, title, mc_questions, tf_questions, created_at")
             .eq("id", quiz_id)
-            .eq("user_id", user["user_id"])
             .single()
             .execute()
         )
 
         if not response.data:
-            raise HTTPException(
-                status_code=404, detail="Quiz not found or access denied."
-            )
+            raise HTTPException(status_code=404, detail="Quiz not found.")
 
         return {"quiz": response.data}
 

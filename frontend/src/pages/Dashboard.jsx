@@ -33,9 +33,21 @@ const Dashboard = () => {
 
     const handleView = (id) => navigate(`/quiz/${id}`);
     const handleEdit = (id) => navigate(`/edit-quiz/${id}`);
-    const handleDelete = (id) => {
-        // Optional: add confirm + delete logic
-        console.log("delete", id);
+    const handleDelete = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this quiz?");
+        if (!confirmDelete) return;
+
+        try {
+            await axios.delete(`${API_URL}/quiz/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            // Remove from state immediately
+            setQuizzes((prev) => prev.filter((quiz) => quiz.id !== id));
+        } catch (err) {
+            alert("Failed to delete quiz.");
+            console.error(err);
+        }
     };
 
     const handleCreateQuiz = () => navigate("/upload");

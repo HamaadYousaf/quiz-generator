@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-// import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import QuizDetail from "./pages/QuizDetail";
+import EditQuiz from "./pages/EditQuiz";
 // import UploadQuiz from "./pages/UploadQuiz";
 
 function App() {
@@ -16,16 +17,24 @@ function App() {
                     <Route path="/register" element={<Register />} />
 
                     <Route path="/" element={
-                        // <ProtectedRoute>
-                        <Dashboard />
-                        // </ProtectedRoute>
+                        <ProtectedRoute>
+                            <Dashboard />
+                        </ProtectedRoute>
                     } />
 
                     <Route path="/quiz/:quiz_id" element={
-                        // <ProtectedRoute>
-                        <QuizDetail />
-                        // </ProtectedRoute>
+                        <ProtectedRoute>
+                            <QuizDetail />
+                        </ProtectedRoute>
                     } />
+                    <Route
+                        path="/edit-quiz/:quiz_id"
+                        element={
+                            <ProtectedRoute>
+                                <EditQuiz />
+                            </ProtectedRoute>
+                        }
+                    />
 
                     {/* <Route path="/upload" element={
                         <ProtectedRoute>
