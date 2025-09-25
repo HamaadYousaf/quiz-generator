@@ -11,7 +11,7 @@ const Login = () => {
     const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
 
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const API_URL = import.meta.env.VITE_API_URL || "https://quiz-generator-sage.vercel.app";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
