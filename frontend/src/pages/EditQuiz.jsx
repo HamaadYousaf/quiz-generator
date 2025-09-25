@@ -90,6 +90,8 @@ const EditQuiz = () => {
                                 <h3 className="font-semibold text-gray-800 mb-2">Multiple Choice Questions</h3>
                                 {mcQuestions.map((q, i) => (
                                     <div key={i} className="mb-3 space-y-1">
+                                        {/* Question */}
+                                        <label className="block text-sm font-medium text-gray-700">Question</label>
                                         <input
                                             className="w-full px-2 py-1 border rounded"
                                             value={q.question}
@@ -101,6 +103,8 @@ const EditQuiz = () => {
                                                 })
                                             }
                                         />
+                                        {/* Options */}
+                                        <label className="block text-sm font-medium text-gray-700 mt-2">Options</label>
                                         {q.options.map((opt, idx) => (
                                             <input
                                                 key={idx}
@@ -113,8 +117,11 @@ const EditQuiz = () => {
                                                         return updated;
                                                     })
                                                 }
+                                                placeholder={`Option ${idx + 1}`}
                                             />
                                         ))}
+                                        {/* Answer */}
+                                        <label className="block text-sm font-medium text-gray-700 mt-2">Answer</label>
                                         <input
                                             className="w-full px-2 py-1 border rounded"
                                             value={q.answer}
