@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # or ["*"] for development only
+    allow_origins=["*"],  # or ["*"] for development only
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
